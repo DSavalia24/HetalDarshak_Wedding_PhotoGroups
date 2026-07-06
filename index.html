@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wedding Photo Groups</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <main class="container">
+    <section class="card">
+      <p class="eyebrow">Hetal & Darshak</p>
+      <h1>Find Your Photo Group</h1>
+      <p class="subtitle">
+        Type your name below to see your wedding photo group.
+      </p>
+
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Enter your name..."
+        autocomplete="off"
+      />
+
+      <div id="results" class="results"></div>
+
+      <p class="footer-note">
+        Please be near the photo area when your group is called.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    let guests = [];
+
+    async function loadGuests() {
+      const response = await fetch("guests.csv");
+      const text = await response.text();
+
+      const rows = parseCSV(text);
+      const headers = rows[0];
+
+      guests = rows.slice(1).map(row => {
+        const guest = {};
+        headers.forEach((header, index) => {
+          guest[header.trim()] = row[index] ? row[index].trim() : "";
+        });
+        return guest;
+      });
+    }
+
+    function parseCSV(text) {
+      const rows = [];
+      let row = [];
+      let cell = "";
+      let insideQuotes = false;
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const nextChar = text[i + 1];
+
+        if (char === '"' && insideQuotes && nextChar === '"') {
+          cell += '"';
+          i++;
+        } else if (char === '"') {
+          insideQuotes = !insideQuotes;
+        } else if (char === "," && !insideQuotes) {
+          row.push(cell);
+          cell = "";
+        } else if ((char === "\n" || char === "\r") && !insideQuotes) {
+          if (cell || row.length) {
+            row.push(cell);
+            rows.push(row);
+            row = [];
+            cell = "";
+          }
+        } else {
+          cell += char;
+        }
+      }
+
+      if (cell || row.length) {
+        row.push(cell);
+        rows.push(row);
+      }
+
+      return rows;
+    }
+
+    function normalize(text) {
+      return text
+        .toLowerCase()
+        .replace(/[^a-z0-9 ]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function searchGuests(query) {
+      const cleanedQuery = normalize(query);
+      const resultsDiv = document.getElementById("results");
+
+      if (!cleanedQuery) {
+        resultsDiv.innerHTML = "";
+        return;
+      }
+
+      const matches = guests.filter(guest => {
+        const duplicateFlag = normalize(guest["Duplicate Flag"]);
+        if (duplicateFlag === "yes") return false;
+
+        const searchKey = normalize(guest["Search Key"]);
+        const displayName = normalize(guest["Display Name"]);
+        const firstName = normalize(guest["First Name"]);
+        const lastName = normalize(guest["Last Name"]);
+
+        return (
+          searchKey.includes(cleanedQuery) ||
+          displayName.includes(cleanedQuery) ||
+          firstName.includes(cleanedQuery) ||
+          lastName.includes(cleanedQuery)
+        );
+      });
+
+      displayResults(matches);
+    }
+
+    function displayResults(matches) {
+      const resultsDiv = document.getElementById("results");
+
+      if (matches.length === 0) {
+        resultsDiv.innerHTML = `
+          <div class="no-result">
+            <h2>No guest found</h2>
+            <p>Try your first name, last name, or full name.</p>
+          </div>
+        `;
+        return;
+      }
+
+      resultsDiv.innerHTML = matches.map(guest => {
+        const groupText = guest["Photo Groups"];
+        const groupCount = Number(guest["Group Count"]) || 1;
+        const side = guest["Side(s)"];
+        const groups = groupText.split(",").map(g => g.trim()).filter(Boolean);
+
+        return `
+          <div class="result-card">
+            <h2>${guest["Display Name"]}</h2>
+
+            <p class="label">
+              Photo Group${groupCount > 1 ? "s" : ""}
+            </p>
+
+            <div class="group-list">
+              ${groups.map(group => `<span>${group}</span>`).join("")}
+            </div>
+
+            ${side ? `<p class="side">${side} Side</p>` : ""}
+
+            <p class="instruction">
+              Please head to the photo area when your group is called.
+            </p>
+          </div>
+        `;
+      }).join("");
+    }
+
+    document.getElementById("searchInput").addEventListener("input", event => {
+      searchGuests(event.target.value);
+    });
+
+    loadGuests();
+  </script>
+</body>
+</html>
