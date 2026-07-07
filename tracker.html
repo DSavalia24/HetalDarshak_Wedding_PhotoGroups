@@ -119,42 +119,45 @@
     }
 
 
-    async function sendTrackerUpdate(payload) {
-      await fetch(TRACKER_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify(payload)
-      });
+    async function sendTrackerAction(action, groupNumber) {
+      let url = TRACKER_URL + "?action=" + encodeURIComponent(action);
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await loadTracker();
+      if (groupNumber !== undefined && groupNumber !== null) {
+        url += "&group=" + encodeURIComponent(groupNumber);
+      }
+
+      const response = await fetch(url + "&t=" + Date.now());
+      const data = await response.json();
+
+      if (!data.success) {
+        alert(data.message || "Tracker update failed.");
+        return;
+      }
+
+      groups = data.groups || [];
+      renderTracker();
     }
 
     async function completeCurrentGroup() {
       const currentIndex = getCurrentIndex();
       if (currentIndex < 0) return;
+
       const current = groups[currentIndex];
-      await sendTrackerUpdate({
-        action: "complete",
-        completedGroup: current.group
-      });
+      await sendTrackerAction("complete", current.group);
     }
 
     async function setCurrentGroup(groupNumber) {
       const confirmed = confirm("Set Group " + groupNumber + " as the current group?");
       if (!confirmed) return;
-      await sendTrackerUpdate({
-        action: "setCurrent",
-        currentGroup: groupNumber
-      });
+
+      await sendTrackerAction("setCurrent", groupNumber);
     }
 
     async function resetTrackerConfirm() {
       const confirmed = confirm("Reset tracker so Group 1 is current and all others are pending?");
       if (!confirmed) return;
-      await sendTrackerUpdate({
-        action: "reset"
-      });
+
+      await sendTrackerAction("reset");
     }
   </script>
 </body>
