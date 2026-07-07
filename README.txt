@@ -1,6 +1,9 @@
-Wedding Photo Group Website - Styled Direct Link Fix
+Wedding Photo Group Website - Guest Iframe Status Fix
 
-This package keeps the working tracker functionality and restores the full styling.
+This version makes the guest page work like the coordinator page: it loads the live status directly from Apps Script in an iframe.
+
+Tracker URL is already inserted:
+https://script.google.com/macros/s/AKfycbyJenRcbXRDpt6vXL97EHQAdnqeH_9FHTRlCpfqA4nnE0_6Yc1Ur7RFqZI18HbXL1_Gdg/exec
 
 Files included:
 - index.html
@@ -15,11 +18,14 @@ Add these yourself:
 - guests.csv
 - image1.jpg
 
-Important:
-1. Replace PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE in BOTH index.html and tracker.html.
-2. Make sure style.css is in the root folder next to index.html and tracker.html.
-3. Push all files to GitHub.
-4. Hard refresh both pages with Ctrl + F5.
-5. If it still looks unstyled, open:
-   https://dsavalia24.github.io/HetalDarshak_Wedding_PhotoGroups/style.css
-   You should see CSS text. If you get 404, style.css was not pushed to the root folder.
+IMPORTANT:
+1. Replace Apps Script with Code.gs from this package.
+2. Deploy a NEW Apps Script version:
+   Deploy > Manage deployments > Edit pencil > Version: New version > Deploy
+3. Push all website files to GitHub Pages.
+4. Hard refresh the guest page with Ctrl + F5.
+
+Test this direct iframe URL:
+https://script.google.com/macros/s/AKfycbyJenRcbXRDpt6vXL97EHQAdnqeH_9FHTRlCpfqA4nnE0_6Yc1Ur7RFqZI18HbXL1_Gdg/exec?action=guestStatus&groups=10,44
+
+It should show a styled status box by itself in the browser.

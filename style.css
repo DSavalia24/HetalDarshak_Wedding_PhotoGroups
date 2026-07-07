@@ -555,3 +555,14 @@ button:disabled {
     text-align: center;
   }
 }
+
+/* Guest live tracker iframe */
+.guest-status-frame {
+  display: block;
+  width: 100%;
+  height: 118px;
+  border: 0;
+  margin-top: 18px;
+  border-radius: 18px;
+  background: transparent;
+}
