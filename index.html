@@ -6,33 +6,47 @@
   <title>Wedding Photo Groups</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-  <div class="background"></div>
 
-  <main class="container guest-container">
-    <section class="card guest-card">
+<body>
+  <div class="bg-slideshow">
+    <div class="bg-slide slide-1"></div>
+    <div class="bg-slide slide-2"></div>
+    <div class="bg-slide slide-3"></div>
+    <div class="bg-slide slide-4"></div>
+  </div>
+
+  <main class="container">
+    <section class="card">
       <div class="monogram">H ♥ D</div>
+
+      <img src="couple-photo.jpg" alt="Hetal and Darshak" class="couple-photo" />
+
       <p class="eyebrow">Hetal & Darshak</p>
       <h1>Find Your Photo Group</h1>
-      <p class="subtitle">Type your name below to see your photo group and live status.</p>
+      <p class="subtitle">Type your name below to see your wedding photo group.</p>
 
       <div class="search-wrap">
         <img src="floral-left.png" alt="" class="input-floral floral-left" />
-        <input type="text" id="searchInput" placeholder="Enter your name..." autocomplete="off" />
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Enter your name..."
+          autocomplete="off"
+        />
         <img src="floral-right.png" alt="" class="input-floral floral-right" />
       </div>
 
       <div id="results" class="results"></div>
+
       <p class="footer-note">📸 Please be near the photo area when your group is called.</p>
     </section>
+
     <p class="bottom-note">♡ Thank you for celebrating with us!</p>
   </main>
 
   <script>
-    const TRACKER_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
-
+    const TRACKER_URL = "https://script.google.com/macros/s/AKfycbyJenRcbXRDpt6vXL97EHQAdnqeH_9FHTRlCpfqA4nnE0_6Yc1Ur7RFqZI18HbXL1_Gdg/exec";
     let guests = [];
-    let trackerGroups = [];
 
     async function loadGuests() {
       const response = await fetch("guests.csv");
@@ -47,19 +61,6 @@
         });
         return guest;
       });
-    }
-
-    async function loadTracker() {
-      if (!TRACKER_URL || TRACKER_URL.includes("PASTE_YOUR")) return;
-      try {
-        const response = await fetch(TRACKER_URL);
-        const data = await response.json();
-        trackerGroups = data.groups || [];
-        const q = document.getElementById("searchInput").value;
-        if (q.trim()) searchGuests(q);
-      } catch (error) {
-        console.warn("Tracker could not load:", error);
-      }
     }
 
     function parseCSV(text) {
@@ -91,96 +92,21 @@
           cell += char;
         }
       }
+
       if (cell || row.length) {
         row.push(cell);
         rows.push(row);
       }
+
       return rows;
     }
 
     function normalize(text) {
-      return String(text || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
-    }
-
-    function getCurrentGroupNumber() {
-      const current = trackerGroups.find(g => normalize(g.status) === "current");
-      return current ? Number(current.group) : null;
-    }
-
-    function getGroupStatus(groupNumber) {
-      const found = trackerGroups.find(g => String(g.group) === String(groupNumber));
-      return found ? found.status : "Pending";
-    }
-
-    function getGuestStatusMessage(groups) {
-      if (!trackerGroups.length) {
-        return {
-          className: "status-pending",
-          title: "Photo tracker loading",
-          message: "Your group numbers are listed above. Please listen for the coordinator.",
-          highlight: ""
-        };
-      }
-
-      const currentGroup = getCurrentGroupNumber();
-
-      if (!currentGroup) {
-        return {
-          className: "status-done",
-          title: "Photos are complete",
-          message: "All photo groups appear to be finished.",
-          highlight: "All Done"
-        };
-      }
-
-      const numericGroups = groups.map(Number).filter(n => !Number.isNaN(n));
-      const upcomingGroups = numericGroups.filter(n => n > currentGroup).sort((a, b) => a - b);
-      const currentMatches = numericGroups.includes(currentGroup);
-      const alreadyDone = numericGroups.length > 0 && numericGroups.every(n => n < currentGroup);
-      const nextGuestGroup = upcomingGroups[0];
-
-      if (currentMatches) {
-        return {
-          className: "status-now",
-          title: "You are up now!",
-          message: "Please head to the photo area now.",
-          highlight: "Now Taking Group " + currentGroup
-        };
-      }
-
-      if (alreadyDone) {
-        return {
-          className: "status-done",
-          title: "Your group photos are done",
-          message: "Thank you! Your listed photo groups have already been completed.",
-          highlight: "Completed"
-        };
-      }
-
-      if (nextGuestGroup) {
-        const groupsAway = nextGuestGroup - currentGroup;
-        let message = "Please relax for now. We will call your group soon.";
-
-        if (groupsAway === 1) {
-          message = "You are next. Please stay close to the photo area.";
-        } else if (groupsAway <= 3) {
-          message = "You are coming up soon. Please stay nearby.";
-        }
-
-        return {
-          className: groupsAway === 1 ? "status-next" : "status-pending",
-          title: groupsAway === 1 ? "You are next" : "You are not up yet",
-          message,
-          highlight: "Currently: Group " + currentGroup + " • Your next group: " + nextGuestGroup
-        };
-      }
-
-      return {
-        className: "status-pending",
-        title: "Please check with the coordinator",
-        message: "Your groups could not be compared to the live tracker.",
-        highlight: "Current Group " + currentGroup
-      };
+      return String(text || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9 ]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
     }
 
     function searchGuests(query) {
@@ -201,7 +127,12 @@
         const firstName = normalize(guest["First Name"]);
         const lastName = normalize(guest["Last Name"]);
 
-        return searchKey.includes(cleanedQuery) || displayName.includes(cleanedQuery) || firstName.includes(cleanedQuery) || lastName.includes(cleanedQuery);
+        return (
+          searchKey.includes(cleanedQuery) ||
+          displayName.includes(cleanedQuery) ||
+          firstName.includes(cleanedQuery) ||
+          lastName.includes(cleanedQuery)
+        );
       });
 
       displayResults(matches);
@@ -225,27 +156,16 @@
         const groupCount = Number(guest["Group Count"]) || 1;
         const side = guest["Side(s)"];
         const groups = groupText.split(",").map(g => g.trim()).filter(Boolean);
-        const statusMessage = getGuestStatusMessage(groups);
 
         return `
           <div class="result-card">
             <h2>${guest["Display Name"]}</h2>
-            <p class="label">Your Photo Group${groupCount > 1 ? "s" : ""}</p>
-
+            <p class="label">Photo Group${groupCount > 1 ? "s" : ""}</p>
             <div class="group-list">
-              ${groups.map(group => {
-                const status = normalize(getGroupStatus(group));
-                return `<span class="${status}">${group}</span>`;
-              }).join("")}
+              ${groups.map(group => `<span>${group}</span>`).join("")}
             </div>
-
             ${side ? `<p class="side">${side} Side</p>` : ""}
-
-            <div class="guest-status ${statusMessage.className}">
-              <p class="status-kicker">${statusMessage.highlight}</p>
-              <h3>${statusMessage.title}</h3>
-              <p>${statusMessage.message}</p>
-            </div>
+            <p class="instruction">Please head to the photo area when your group is called.</p>
           </div>
         `;
       }).join("");
@@ -255,13 +175,7 @@
       searchGuests(event.target.value);
     });
 
-    async function init() {
-      await loadGuests();
-      await loadTracker();
-      setInterval(loadTracker, 5000);
-    }
-
-    init();
+    loadGuests();
   </script>
 </body>
 </html>
