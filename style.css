@@ -427,3 +427,51 @@ button:disabled {
     text-align: center;
   }
 }
+
+
+/* Simplified coordinator tracker */
+.simplified-status {
+  grid-template-columns: 1.25fr 0.75fr;
+}
+
+.big-current h2 {
+  font-size: 76px;
+  line-height: 1;
+}
+
+.complete-button {
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.jump-panel {
+  margin-top: 18px;
+  text-align: left;
+  background: rgba(255, 244, 235, 0.86);
+  border: 1px solid #e4c7b2;
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.jump-panel summary {
+  cursor: pointer;
+  color: #7b3f24;
+  font-weight: bold;
+  text-align: center;
+  list-style-position: inside;
+}
+
+.jump-note {
+  text-align: center;
+  margin: 12px 0 0;
+}
+
+@media (max-width: 640px) {
+  .simplified-status {
+    grid-template-columns: 1fr;
+  }
+
+  .big-current h2 {
+    font-size: 64px;
+  }
+}

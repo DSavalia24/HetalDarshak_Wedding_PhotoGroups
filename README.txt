@@ -1,4 +1,4 @@
-Wedding Photo Group Website With Live Tracker
+Wedding Photo Group Website With Simplified Live Tracker
 
 Files included:
 - index.html
@@ -20,3 +20,4 @@ Setup:
 5. Add rows 1 through 44. Set Group 1 to Current and all others to Pending.
 6. Paste Code.gs into Apps Script and deploy as a Web App.
 7. Replace PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE in index.html and tracker.html.
+8. Coordinator page: /tracker.html
