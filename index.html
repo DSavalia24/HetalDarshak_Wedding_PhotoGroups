@@ -6,12 +6,14 @@
   <title>Wedding Photo Groups</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <div class="background"></div>
 
   <main class="container guest-container">
     <section class="card guest-card">
       <div class="monogram">H ♥ D</div>
+
       <p class="eyebrow">Hetal & Darshak</p>
       <h1>Find Your Photo Group</h1>
       <p class="subtitle">Type your name below to see your photo group and live status.</p>
@@ -23,8 +25,10 @@
       </div>
 
       <div id="results" class="results"></div>
+
       <p class="footer-note">📸 Please be near the photo area when your group is called.</p>
     </section>
+
     <p class="bottom-note">♡ Thank you for celebrating with us!</p>
   </main>
 
@@ -33,6 +37,38 @@
 
     let guests = [];
     let trackerGroups = [];
+
+    function jsonpRequest(action, groupNumber) {
+      return new Promise((resolve, reject) => {
+        const callbackName = "jsonpCallback_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
+
+        let url = TRACKER_URL + "?action=" + encodeURIComponent(action);
+        if (groupNumber !== undefined && groupNumber !== null) {
+          url += "&group=" + encodeURIComponent(groupNumber);
+        }
+        url += "&callback=" + callbackName + "&t=" + Date.now();
+
+        const script = document.createElement("script");
+
+        window[callbackName] = function(data) {
+          cleanup();
+          resolve(data);
+        };
+
+        script.onerror = function() {
+          cleanup();
+          reject(new Error("JSONP request failed"));
+        };
+
+        function cleanup() {
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        script.src = url;
+        document.body.appendChild(script);
+      });
+    }
 
     async function loadGuests() {
       const response = await fetch("guests.csv");
@@ -51,10 +87,16 @@
 
     async function loadTracker() {
       if (!TRACKER_URL || TRACKER_URL.includes("PASTE_YOUR")) return;
+
       try {
-        const response = await fetch(TRACKER_URL);
-        const data = await response.json();
+        const data = await jsonpRequest("status");
+        if (!data.success) {
+          console.warn(data.message || "Tracker failed to load.");
+          return;
+        }
+
         trackerGroups = data.groups || [];
+
         const q = document.getElementById("searchInput").value;
         if (q.trim()) searchGuests(q);
       } catch (error) {
@@ -91,15 +133,21 @@
           cell += char;
         }
       }
+
       if (cell || row.length) {
         row.push(cell);
         rows.push(row);
       }
+
       return rows;
     }
 
     function normalize(text) {
-      return String(text || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+      return String(text || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9 ]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
     }
 
     function getCurrentGroupNumber() {
@@ -201,7 +249,12 @@
         const firstName = normalize(guest["First Name"]);
         const lastName = normalize(guest["Last Name"]);
 
-        return searchKey.includes(cleanedQuery) || displayName.includes(cleanedQuery) || firstName.includes(cleanedQuery) || lastName.includes(cleanedQuery);
+        return (
+          searchKey.includes(cleanedQuery) ||
+          displayName.includes(cleanedQuery) ||
+          firstName.includes(cleanedQuery) ||
+          lastName.includes(cleanedQuery)
+        );
       });
 
       displayResults(matches);
