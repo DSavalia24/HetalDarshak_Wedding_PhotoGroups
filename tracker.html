@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Photo Group Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="background"></div>
+
+  <main class="container tracker-container">
+    <section class="card tracker-page-card">
+      <div class="monogram">H ♥ D</div>
+      <p class="eyebrow">Coordinator View</p>
+      <h1>Photo Tracker</h1>
+      <p class="subtitle">Tap the button when the current group is finished.</p>
+
+      <div id="passcodeBox" class="passcode-box">
+        <input type="password" id="passcodeInput" placeholder="Coordinator passcode" />
+        <button onclick="unlockTracker()">Unlock Tracker</button>
+        <p class="small-note">Default passcode in code: 0711</p>
+      </div>
+
+      <div id="trackerApp" class="tracker-app hidden">
+        <div id="trackerStatus" class="tracker-status"></div>
+
+        <button id="completeCurrentBtn" class="complete-button" onclick="completeCurrentGroup()">
+          Complete Current Group
+        </button>
+
+        <div class="tracker-actions">
+          <button onclick="loadTracker()">Refresh</button>
+          <button onclick="resetTrackerConfirm()" class="danger-light">Reset to Group 1</button>
+        </div>
+
+        <div id="groupControls" class="group-controls"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const TRACKER_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+    const COORDINATOR_PASSCODE = "0711";
+
+    let groups = [];
+
+    function unlockTracker() {
+      const value = document.getElementById("passcodeInput").value;
+      if (value === COORDINATOR_PASSCODE) {
+        document.getElementById("passcodeBox").classList.add("hidden");
+        document.getElementById("trackerApp").classList.remove("hidden");
+        loadTracker();
+        setInterval(loadTracker, 5000);
+      } else {
+        alert("Incorrect passcode.");
+      }
+    }
+
+    async function loadTracker() {
+      const response = await fetch(TRACKER_URL);
+      const data = await response.json();
+      groups = data.groups || [];
+      renderTracker();
+    }
+
+    function normalize(text) {
+      return String(text || "").toLowerCase().trim();
+    }
+
+    function getCurrentIndex() {
+      return groups.findIndex(g => normalize(g.status) === "current");
+    }
+
+    function renderTracker() {
+      const done = groups.filter(g => normalize(g.status) === "done").map(g => g.group);
+      const currentIndex = getCurrentIndex();
+      const current = currentIndex >= 0 ? groups[currentIndex] : null;
+      const next = currentIndex >= 0 ? groups[currentIndex + 1] : null;
+
+      document.getElementById("trackerStatus").innerHTML = `
+        <div class="tracker-card current">
+          <p class="label">Current Group</p>
+          <h2>${current ? current.group : "All Done"}</h2>
+        </div>
+
+        <div class="tracker-card next">
+          <p class="label">Next Group</p>
+          <h2>${next ? next.group : "None"}</h2>
+        </div>
+
+        <div class="tracker-card done-summary">
+          <p class="label">Completed</p>
+          <p>${done.length ? done.join(", ") : "None yet"}</p>
+        </div>
+      `;
+
+      const completeBtn = document.getElementById("completeCurrentBtn");
+      completeBtn.innerText = current ? `Complete Group ${current.group}` : "All Groups Complete";
+      completeBtn.disabled = !current;
+
+      document.getElementById("groupControls").innerHTML = groups.map(g => `
+        <button class="group-button ${normalize(g.status)}" onclick="setCurrentGroup('${g.group}')">
+          Group ${g.group}
+          <span>${g.status}</span>
+        </button>
+      `).join("");
+    }
+
+    async function completeCurrentGroup() {
+      const currentIndex = getCurrentIndex();
+      if (currentIndex < 0) return;
+      const current = groups[currentIndex];
+
+      await fetch(TRACKER_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "complete", completedGroup: current.group })
+      });
+
+      await loadTracker();
+    }
+
+    async function setCurrentGroup(groupNumber) {
+      const confirmed = confirm("Set Group " + groupNumber + " as the current group?");
+      if (!confirmed) return;
+
+      await fetch(TRACKER_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "setCurrent", currentGroup: groupNumber })
+      });
+
+      await loadTracker();
+    }
+
+    async function resetTrackerConfirm() {
+      const confirmed = confirm("Reset tracker so Group 1 is current and all others are pending?");
+      if (!confirmed) return;
+
+      await fetch(TRACKER_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "reset" })
+      });
+
+      await loadTracker();
+    }
+  </script>
+</body>
+</html>
