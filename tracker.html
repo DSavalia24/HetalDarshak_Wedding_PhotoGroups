@@ -118,50 +118,43 @@
       `).join("");
     }
 
+
+    async function sendTrackerUpdate(payload) {
+      await fetch(TRACKER_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify(payload)
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await loadTracker();
+    }
+
     async function completeCurrentGroup() {
       const currentIndex = getCurrentIndex();
       if (currentIndex < 0) return;
-
       const current = groups[currentIndex];
-
-      await fetch(TRACKER_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          action: "complete",
-          completedGroup: current.group
-        })
+      await sendTrackerUpdate({
+        action: "complete",
+        completedGroup: current.group
       });
-
-      await loadTracker();
     }
 
     async function setCurrentGroup(groupNumber) {
       const confirmed = confirm("Set Group " + groupNumber + " as the current group?");
       if (!confirmed) return;
-
-      await fetch(TRACKER_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          action: "setCurrent",
-          currentGroup: groupNumber
-        })
+      await sendTrackerUpdate({
+        action: "setCurrent",
+        currentGroup: groupNumber
       });
-
-      await loadTracker();
     }
 
     async function resetTrackerConfirm() {
       const confirmed = confirm("Reset tracker so Group 1 is current and all others are pending?");
       if (!confirmed) return;
-
-      await fetch(TRACKER_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          action: "reset"
-        })
+      await sendTrackerUpdate({
+        action: "reset"
       });
-
-      await loadTracker();
     }
   </script>
 </body>
