@@ -8,35 +8,40 @@
 </head>
 
 <body>
+  <div class="bg-slideshow">
+    <div class="bg-slide slide-1"></div>
+    <div class="bg-slide slide-2"></div>
+    <div class="bg-slide slide-3"></div>
+    <div class="bg-slide slide-4"></div>
+  </div>
+
   <main class="container">
     <section class="card">
-
       <div class="monogram">H ♥ D</div>
 
       <img src="couple-photo.jpg" alt="Hetal and Darshak" class="couple-photo" />
 
       <p class="eyebrow">Hetal & Darshak</p>
-
       <h1>Find Your Photo Group</h1>
+      <p class="subtitle">Type your name below to see your wedding photo group.</p>
 
-      <p class="subtitle">
-        Type your name below to see your wedding photo group.
-      </p>
-
-      <input
-        type="text"
-        id="searchInput"
-        placeholder="Enter your name..."
-        autocomplete="off"
-      />
+      <div class="search-wrap">
+        <img src="floral-left.png" alt="" class="input-floral floral-left" />
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Enter your name..."
+          autocomplete="off"
+        />
+        <img src="floral-right.png" alt="" class="input-floral floral-right" />
+      </div>
 
       <div id="results" class="results"></div>
 
-      <p class="footer-note">
-        Please be near the photo area when your group is called.
-      </p>
-
+      <p class="footer-note">📸 Please be near the photo area when your group is called.</p>
     </section>
+
+    <p class="bottom-note">♡ Thank you for celebrating with us!</p>
   </main>
 
   <script>
@@ -45,7 +50,6 @@
     async function loadGuests() {
       const response = await fetch("guests.csv");
       const text = await response.text();
-
       const rows = parseCSV(text);
       const headers = rows[0];
 
@@ -97,7 +101,7 @@
     }
 
     function normalize(text) {
-      return text
+      return String(text || "")
         .toLowerCase()
         .replace(/[^a-z0-9 ]/g, "")
         .replace(/\s+/g, " ")
@@ -155,20 +159,12 @@
         return `
           <div class="result-card">
             <h2>${guest["Display Name"]}</h2>
-
-            <p class="label">
-              Photo Group${groupCount > 1 ? "s" : ""}
-            </p>
-
+            <p class="label">Photo Group${groupCount > 1 ? "s" : ""}</p>
             <div class="group-list">
               ${groups.map(group => `<span>${group}</span>`).join("")}
             </div>
-
             ${side ? `<p class="side">${side} Side</p>` : ""}
-
-            <p class="instruction">
-              Please head to the photo area when your group is called.
-            </p>
+            <p class="instruction">Please head to the photo area when your group is called.</p>
           </div>
         `;
       }).join("");
